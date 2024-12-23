@@ -1,3 +1,4 @@
+local polyfills = require "easy-dotnet.polyfills"
 local M = {}
 
 local function sln_add_project(sln_path, project)
@@ -20,7 +21,7 @@ local function get_dotnet_new_args(name)
 
   local folder_path = sln_path:gsub("[\\/][^\\/]*%.sln$", "")
   local project_name = sln_path:match("[^\\/]+%.sln$"):gsub("%.sln$", "") .. "." .. name
-  local output = vim.fs.joinpath(folder_path, project_name)
+  local output = polyfills.fs.joinpath(folder_path, project_name)
   return {
     sln_path = sln_path,
     output = output,
@@ -295,7 +296,10 @@ local function name_input_sync()
   return name
 end
 
-M.create_new_item = function(path)
+---@param path string
+---@param cb function | nil
+M.create_new_item = function(path, cb)
+  path = path or "."
   local template = require("easy-dotnet.picker").pick_sync(nil,
     {
       { value = "buildprops",     display = "MSBuild Directory.Build.props File",   type = "MSBuild/props" },
@@ -347,6 +351,9 @@ M.create_new_item = function(path)
       if code == 0 then
       else
         vim.notify("Command failed")
+      end
+      if cb then
+        cb()
       end
     end
   })
